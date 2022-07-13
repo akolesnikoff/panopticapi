@@ -79,8 +79,6 @@ def pq_compute_single_core(proc_id, annotation_set, gt_folder, pred_folder, cate
 
     idx = 0
     for gt_ann, pred_ann in annotation_set:
-        if idx % 100 == 0:
-            print('Core: {}, {} from {} images processed'.format(proc_id, idx, len(annotation_set)))
         idx += 1
 
         pan_gt = np.array(Image.open(os.path.join(gt_folder, gt_ann['file_name'])), dtype=np.uint32)
@@ -161,14 +159,12 @@ def pq_compute_single_core(proc_id, annotation_set, gt_folder, pred_folder, cate
             if intersection / pred_info['area'] > 0.5:
                 continue
             pq_stat[pred_info['category_id']].fp += 1
-    print('Core: {}, all {} images processed'.format(proc_id, len(annotation_set)))
     return pq_stat
 
 
 def pq_compute_multi_core(matched_annotations_list, gt_folder, pred_folder, categories):
     cpu_num = multiprocessing.cpu_count()
     annotations_split = np.array_split(matched_annotations_list, cpu_num)
-    print("Number of cores: {}, images per core: {}".format(cpu_num, len(annotations_split[0])))
     workers = multiprocessing.Pool(processes=cpu_num)
     processes = []
     for proc_id, annotation_set in enumerate(annotations_split):
@@ -195,14 +191,6 @@ def pq_compute(gt_json_file, pred_json_file, gt_folder=None, pred_folder=None):
         pred_folder = pred_json_file.replace('.json', '')
     categories = {el['id']: el for el in gt_json['categories']}
 
-    print("Evaluation panoptic segmentation metrics:")
-    print("Ground truth:")
-    print("\tSegmentation folder: {}".format(gt_folder))
-    print("\tJSON file: {}".format(gt_json_file))
-    print("Prediction:")
-    print("\tSegmentation folder: {}".format(pred_folder))
-    print("\tJSON file: {}".format(pred_json_file))
-
     if not os.path.isdir(gt_folder):
         raise Exception("Folder {} with ground truth segmentations doesn't exist".format(gt_folder))
     if not os.path.isdir(pred_folder):
@@ -224,20 +212,8 @@ def pq_compute(gt_json_file, pred_json_file, gt_folder=None, pred_folder=None):
         results[name], per_class_results = pq_stat.pq_average(categories, isthing=isthing)
         if name == 'All':
             results['per_class'] = per_class_results
-    print("{:10s}| {:>5s}  {:>5s}  {:>5s} {:>5s}".format("", "PQ", "SQ", "RQ", "N"))
-    print("-" * (10 + 7 * 4))
-
-    for name, _isthing in metrics:
-        print("{:10s}| {:5.1f}  {:5.1f}  {:5.1f} {:5d}".format(
-            name,
-            100 * results[name]['pq'],
-            100 * results[name]['sq'],
-            100 * results[name]['rq'],
-            results[name]['n'])
-        )
 
     t_delta = time.time() - start_time
-    print("Time elapsed: {:0.2f} seconds".format(t_delta))
 
     return results
 

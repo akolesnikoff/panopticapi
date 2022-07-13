@@ -15,7 +15,6 @@ def get_traceback(f):
         try:
             return f(*args, **kwargs)
         except Exception as e:
-            print('Caught exception in worker thread:')
             traceback.print_exc()
             raise e
 

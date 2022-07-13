@@ -108,7 +108,6 @@ def combine_to_panoptic_multi_core(img_id2img, inst_by_image,
                                    stuff_area_limit, categories):
     cpu_num = multiprocessing.cpu_count()
     img_ids_split = np.array_split(list(img_id2img), cpu_num)
-    print("Number of cores: {}, images per core: {}".format(cpu_num, len(img_ids_split[0])))
     workers = multiprocessing.Pool(processes=cpu_num)
     processes = []
     for proc_id, img_ids in enumerate(img_ids_split):
@@ -144,21 +143,7 @@ def combine_predictions(semseg_json_file, instseg_json_file, images_json_file,
     if segmentations_folder is None:
         segmentations_folder = panoptic_json_file.rsplit('.', 1)[0]
     if not os.path.isdir(segmentations_folder):
-        print("Creating folder {} for panoptic segmentation PNGs".format(segmentations_folder))
         os.mkdir(segmentations_folder)
-
-    print("Combining:")
-    print("Semantic segmentation:")
-    print("\tJSON file: {}".format(semseg_json_file))
-    print("and")
-    print("Instance segmentations:")
-    print("\tJSON file: {}".format(instseg_json_file))
-    print("into")
-    print("Panoptic segmentations:")
-    print("\tSegmentation folder: {}".format(segmentations_folder))
-    print("\tJSON file: {}".format(panoptic_json_file))
-    print("List of images to combine is takes from {}".format(images_json_file))
-    print('\n')
 
     inst_by_image = defaultdict(list)
     for inst in inst_results:
@@ -191,7 +176,6 @@ def combine_predictions(semseg_json_file, instseg_json_file, images_json_file,
     save_json(coco_d, panoptic_json_file)
 
     t_delta = time.time() - start_time
-    print("Time elapsed: {:0.2f} seconds".format(t_delta))
 
 
 if __name__ == "__main__":

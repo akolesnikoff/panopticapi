@@ -38,8 +38,6 @@ OFFSET = 1000
 def convert_single_core(proc_id, image_set, categories, source_folder, segmentations_folder, VOID=0):
     annotations = []
     for working_idx, image_info in enumerate(image_set):
-        if working_idx % 100 == 0:
-            print('Core: {}, {} from {} images converted'.format(proc_id, working_idx, len(image_set)))
 
         file_name = '{}.png'.format(image_info['file_name'].rsplit('.')[0])
         try:
@@ -71,7 +69,6 @@ def convert_single_core(proc_id, image_set, categories, source_folder, segmentat
                             "segments_info": segm_info})
 
         Image.fromarray(pan_format).save(os.path.join(segmentations_folder, file_name))
-    print('Core: {}, all {} images processed'.format(proc_id, len(image_set)))
     return annotations
 
 
@@ -79,8 +76,6 @@ def converter(source_folder, images_json_file, categories_json_file,
               segmentations_folder, predictions_json_file,
               VOID=0):
     start_time = time.time()
-
-    print("Reading image set information from {}".format(images_json_file))
 
     with open(images_json_file, 'r') as f:
         d_coco = json.load(f)
@@ -93,20 +88,10 @@ def converter(source_folder, images_json_file, categories_json_file,
     if segmentations_folder is None:
         segmentations_folder = predictions_json_file.rsplit('.', 1)[0]
     if not os.path.isdir(segmentations_folder):
-        print("Creating folder {} for panoptic segmentation PNGs".format(segmentations_folder))
         os.mkdir(segmentations_folder)
 
-    print("CONVERTING...")
-    print("2 channels panoptic format:")
-    print("\tSource folder: {}".format(source_folder))
-    print("TO")
-    print("COCO panoptic format:")
-    print("\tSegmentation folder: {}".format(segmentations_folder))
-    print("\tJSON file: {}".format(predictions_json_file))
-    print('\n')
     cpu_num = multiprocessing.cpu_count()
     images_split = np.array_split(images, cpu_num)
-    print("Number of cores: {}, images per core: {}".format(cpu_num, len(images_split[0])))
     workers = multiprocessing.Pool(processes=cpu_num)
     processes = []
     for proc_id, image_set in enumerate(images_split):
@@ -117,12 +102,10 @@ def converter(source_folder, images_json_file, categories_json_file,
     for p in processes:
         annotations.extend(p.get())
 
-    print("Writing final JSON in {}".format(predictions_json_file))
     d_coco['annotations'] = annotations
     save_json(d_coco, predictions_json_file)
 
     t_delta = time.time() - start_time
-    print("Time elapsed: {:0.2f} seconds".format(t_delta))
 
 
 if __name__ == "__main__":
